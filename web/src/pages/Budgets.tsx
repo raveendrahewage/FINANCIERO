@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { useBudgets } from '../hooks/useBudgets';
-import { Plus, Trash2, BellRing, X } from 'lucide-react';
+import { Plus, Trash2, BellRing, BellOff, X } from 'lucide-react';
 import { CURRENCIES, DEFAULT_EXPENSE_CATEGORIES, DEFAULT_INCOME_CATEGORIES } from '../constants';
 
 export default function Budgets() {
-  const { budgets, addBudget, deleteBudget } = useBudgets();
+  const { budgets, addBudget, deleteBudget, updateBudget } = useBudgets();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   return (
@@ -31,7 +31,11 @@ export default function Budgets() {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column' }}>
             {budgets.map(b => (
-              <div key={b.id} style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--border-color)', gap: '1rem' }}>
+              <div key={b.id} style={{ 
+                display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', 
+                padding: '1.25rem 1.5rem', borderBottom: '1px solid var(--border-color)', gap: '1rem',
+                opacity: b.ignored ? 0.6 : 1, filter: b.ignored ? 'grayscale(0.8)' : 'none', transition: 'var(--transition)'
+              }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: '1 1 min-content' }}>
                   <div style={{ 
                     padding: '0.75rem', 
@@ -39,18 +43,26 @@ export default function Budgets() {
                     backgroundColor: 'var(--warning-bg)',
                     color: 'var(--warning-text)'
                   }}>
-                    <BellRing size={20} />
+                    {b.ignored ? <BellOff size={20} /> : <BellRing size={20} />}
                   </div>
                   <div>
-                    <h4 style={{ fontWeight: 600, fontSize: '1.05rem' }}>
+                    <h4 style={{ fontWeight: 600, fontSize: '1.05rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       {b.category === 'ALL' ? 'Any Category' : b.category}
+                      {b.ignored && <span style={{ padding: '0.15rem 0.5rem', backgroundColor: 'var(--bg-color)', border: '1px solid var(--border-color)', fontSize: '0.65rem', borderRadius: '12px', fontWeight: 500, letterSpacing: '0.5px', textTransform: 'uppercase' }}>IGNORED</span>}
                     </h4>
                     <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
                       Limit: {b.amount} {b.currency === 'ALL' ? '(Any)' : b.currency} • {b.period === 'monthly' ? 'Monthly' : 'All-time'}
                     </p>
                   </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: '0 0 auto', justifyContent: 'flex-end', minWidth: '120px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: '0 0 auto', justifyContent: 'flex-end', minWidth: '120px' }}>
+                  <button 
+                    onClick={() => updateBudget(b.id, { ignored: !b.ignored }).catch(console.error)} 
+                    className="btn btn-outline" 
+                    style={{ padding: '0.5rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                  >
+                    {b.ignored ? <><BellRing size={16} /> Enable</> : <><BellOff size={16} /> Ignore</>}
+                  </button>
                   <button onClick={() => deleteBudget(b.id)} className="btn text-danger" style={{ padding: '0.5rem' }}>
                     <Trash2 size={18} />
                   </button>
@@ -142,8 +154,8 @@ function BudgetModal({ onClose, onSubmit }: { onClose: () => void, onSubmit: (da
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1rem' }}>
-            <button type="button" onClick={onClose} className="btn btn-outline">Cancel</button>
-            <button type="submit" className="btn btn-primary">Save Alert</button>
+            <button type="button" onClick={onClose} className="btn btn-outline" style={{ display: 'flex' }}>Cancel</button>
+            <button type="submit" className="btn btn-primary" style={{ display: 'flex' }}>Save Alert</button>
           </div>
         </form>
       </div>

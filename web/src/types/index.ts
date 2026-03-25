@@ -15,4 +15,5 @@ export interface Budget {
   amount: number;
   currency: string;
   period: 'monthly' | 'all_time';
+  ignored?: boolean;
 }

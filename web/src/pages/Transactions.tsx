@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { useTransactions } from '../hooks/useTransactions';
-import { Plus, Trash2, TrendingUp, TrendingDown, X, Receipt } from 'lucide-react';
+import { Plus, Trash2, TrendingUp, TrendingDown, X, Receipt, Pencil } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 import { CURRENCIES, DEFAULT_EXPENSE_CATEGORIES, DEFAULT_INCOME_CATEGORIES } from '../constants';
+import type { Transaction } from '../types';
 
 export default function Transactions() {
-  const { transactions, loading, addTransaction, deleteTransaction } = useTransactions();
+  const { transactions, loading, addTransaction, updateTransaction, deleteTransaction } = useTransactions();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingTx, setEditingTx] = useState<Transaction | null>(null);
 
   if (loading) return <div className="text-secondary text-center mt-4">Loading transactions...</div>;
 
@@ -22,7 +24,11 @@ export default function Transactions() {
             <p className="text-secondary">Manage your income and expenses.</p>
           </div>
         </div>
-        <button className="btn btn-primary" onClick={() => setIsModalOpen(true)} style={{ width: '100%', maxWidth: 'max-content' }}>
+        <button 
+          className="btn btn-primary" 
+          onClick={() => { setEditingTx(null); setIsModalOpen(true); }} 
+          style={{ width: '100%', maxWidth: 'max-content' }}
+        >
           <Plus size={18} />
           Add Transaction
         </button>
@@ -51,15 +57,27 @@ export default function Transactions() {
                     </p>
                   </div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flex: '0 0 auto', justifyContent: 'flex-end', minWidth: '120px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: '0 0 auto', justifyContent: 'flex-end', minWidth: '120px' }}>
                   <span style={{ 
                     fontWeight: 700, 
                     fontSize: '1.125rem',
-                    color: t.type === 'income' ? 'var(--success-text)' : 'var(--danger-text)' 
+                    color: t.type === 'income' ? 'var(--success-text)' : 'var(--danger-text)',
+                    marginRight: '0.5rem'
                   }}>
                     {t.type === 'income' ? '+' : '-'}{t.currency || 'USD'} {Number(t.amount).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                   </span>
-                  <button onClick={() => deleteTransaction(t.id)} className="btn text-danger" style={{ padding: '0.5rem' }}>
+                  
+                  {/* Edit Button */}
+                  <button 
+                    onClick={() => { setEditingTx(t); setIsModalOpen(true); }} 
+                    className="btn btn-outline" 
+                    style={{ padding: '0.5rem', border: 'none', color: 'var(--text-secondary)' }}
+                    title="Edit Transaction"
+                  >
+                    <Pencil size={18} />
+                  </button>
+
+                  <button onClick={() => deleteTransaction(t.id)} className="btn text-danger" style={{ padding: '0.5rem', border: 'none' }} title="Delete Transaction">
                     <Trash2 size={18} />
                   </button>
                 </div>
@@ -71,9 +89,15 @@ export default function Transactions() {
 
       {isModalOpen && (
         <TransactionModal 
+          initialData={editingTx}
           onClose={() => setIsModalOpen(false)} 
-          onSubmit={async (data) => {
-            await addTransaction(data);
+          onSubmit={(data) => {
+            if (editingTx) {
+              updateTransaction(editingTx.id, data).catch(console.error);
+            } else {
+              addTransaction(data).catch(console.error);
+            }
+            setIsModalOpen(false);
           }} 
         />
       )}
@@ -81,46 +105,43 @@ export default function Transactions() {
   );
 }
 
-function TransactionModal({ onClose, onSubmit }: { onClose: () => void, onSubmit: (data: any) => Promise<void> }) {
-  const [type, setType] = useState<'income' | 'expense'>('expense');
-  const [amount, setAmount] = useState('');
-  const [category, setCategory] = useState('');
-  const [customCategory, setCustomCategory] = useState('');
-  const [date, setDate] = useState(format(new Date(), 'yyyy-MM-dd'));
-  const [note, setNote] = useState('');
-  const [currency, setCurrency] = useState('USD');
-  const [error, setError] = useState('');
+function TransactionModal({ onClose, onSubmit, initialData }: { onClose: () => void, onSubmit: (data: any) => void, initialData?: Transaction | null }) {
+  const [type, setType] = useState<'income' | 'expense'>(initialData?.type || 'expense');
+  const [amount, setAmount] = useState(initialData ? String(initialData.amount) : '');
+  
+  const defaultCats = type === 'expense' ? DEFAULT_EXPENSE_CATEGORIES : DEFAULT_INCOME_CATEGORIES;
+  
+  let initialCat = initialData?.category || '';
+  let initialCustom = '';
+  // If the stored category isn't in our predefined enum set, treat it as a "new_custom" drop-down trigger.
+  if (initialData?.category && !defaultCats.includes(initialData.category)) {
+      initialCat = 'new_custom';
+      initialCustom = initialData.category;
+  }
+  
+  const [category, setCategory] = useState(initialCat);
+  const [customCategory, setCustomCategory] = useState(initialCustom);
+  
+  const [date, setDate] = useState(initialData?.date || format(new Date(), 'yyyy-MM-dd'));
+  const [note, setNote] = useState(initialData?.note || '');
+  const [currency, setCurrency] = useState(initialData?.currency || 'USD');
 
-  const [saving, setSaving] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!amount || parseFloat(amount) <= 0) return;
     
+    // Evaluate if the user picked a pre-fixed standard category or injected a raw custom string
     const finalCategory = category === 'new_custom' ? customCategory : category;
     if (!finalCategory) return;
     
-    setSaving(true);
-    setError('');
-    
-    try {
-      // Fire and forget (Firebase optimistic state handles UI update instantly)
-      onSubmit({
-        type,
-        amount: parseFloat(amount),
-        category: finalCategory,
-        date,
-        note,
-        currency
-      });
-      onClose(); // Instantly close modal
-    } catch (err: any) {
-      console.error(err);
-      setError(err?.message || "Failed to save. Ensure Firestore is configured properly or checking rules.");
-    } finally {
-      // Always stop the saving animation
-      setSaving(false);
-    }
+    onSubmit({
+      type,
+      amount: parseFloat(amount),
+      category: finalCategory,
+      date,
+      note,
+      currency
+    });
   };
 
   const categories = type === 'expense' ? DEFAULT_EXPENSE_CATEGORIES : DEFAULT_INCOME_CATEGORIES;
@@ -133,12 +154,12 @@ function TransactionModal({ onClose, onSubmit }: { onClose: () => void, onSubmit
       zIndex: 50, padding: '1rem'
     }}>
       <div className="card w-full" style={{ maxWidth: '500px', position: 'relative', overflowY: 'auto', maxHeight: '90vh' }}>
-        <button onClick={onClose} style={{ position: 'absolute', top: '1rem', right: '1rem', color: 'var(--text-secondary)' }}>
+        <button type="button" onClick={onClose} style={{ position: 'absolute', top: '1rem', right: '1rem', color: 'var(--text-secondary)' }}>
           <X size={24} />
         </button>
-        <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '1.5rem' }}>Add Transaction</h2>
-        
-        {error && <div style={{ padding: '0.75rem', marginBottom: '1rem', backgroundColor: 'var(--danger-bg)', color: 'var(--danger-text)', borderRadius: 'var(--radius-md)', fontSize: '0.875rem' }}>{error}</div>}
+        <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '1.5rem' }}>
+          {initialData ? 'Edit Transaction' : 'Add Transaction'}
+        </h2>
         
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           
@@ -224,9 +245,9 @@ function TransactionModal({ onClose, onSubmit }: { onClose: () => void, onSubmit
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1rem', flexWrap: 'wrap' }}>
-            <button type="button" onClick={onClose} className="btn btn-outline" disabled={saving}>Cancel</button>
-            <button type="submit" className="btn btn-primary" disabled={saving}>
-              {saving ? 'Saving...' : 'Save Transaction'}
+            <button type="button" onClick={onClose} className="btn btn-outline">Cancel</button>
+            <button type="submit" className="btn btn-primary">
+              {initialData ? 'Save Changes' : 'Save Transaction'}
             </button>
           </div>
         </form>

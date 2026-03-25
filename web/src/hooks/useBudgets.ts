@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { collection, query, onSnapshot, addDoc, deleteDoc, doc, serverTimestamp } from 'firebase/firestore';
+import { collection, query, onSnapshot, addDoc, deleteDoc, updateDoc, doc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../firebase';
 import { useAuth } from '../contexts/AuthContext';
 import type { Budget } from '../types';
@@ -35,8 +35,14 @@ export function useBudgets() {
     if (!user) throw new Error("Not logged in");
     return addDoc(collection(db, 'users', user.uid, 'budgets'), {
       ...data,
+      ignored: false,
       createdAt: serverTimestamp()
     });
+  };
+
+  const updateBudget = async (id: string, data: Partial<Omit<Budget, 'id'>>) => {
+    if (!user) throw new Error("Not logged in");
+    return updateDoc(doc(db, 'users', user.uid, 'budgets', id), data);
   };
 
   const deleteBudget = async (id: string) => {
@@ -44,5 +50,5 @@ export function useBudgets() {
     return deleteDoc(doc(db, 'users', user.uid, 'budgets', id));
   };
 
-  return { budgets, addBudget, deleteBudget };
+  return { budgets, addBudget, updateBudget, deleteBudget };
 }
