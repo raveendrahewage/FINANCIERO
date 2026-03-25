@@ -8,6 +8,8 @@ import Login from './pages/Login';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Transactions from './pages/Transactions';
+import Insights from './pages/Insights';
+import Budgets from './pages/Budgets';
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -33,6 +35,8 @@ function AppRoutes() {
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="transactions" element={<Transactions />} />
+        <Route path="insights" element={<Insights />} />
+        <Route path="budgets" element={<Budgets />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

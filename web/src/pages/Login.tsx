@@ -56,16 +56,8 @@ export default function Login() {
         }} />
 
         <div style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{ marginBottom: '2.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div style={{ 
-              padding: '1rem', 
-              background: 'linear-gradient(135deg, var(--primary-color), var(--primary-hover))', 
-              borderRadius: 'var(--radius-lg)', 
-              color: 'white',
-              boxShadow: '0 10px 25px -5px rgba(59, 130, 246, 0.4)'
-            }}>
-              <Wallet size={36} />
-            </div>
+          <div style={{ marginBottom: '2.5rem', display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
+            <img src="/logo.svg" alt="Financiero" style={{ width: '64px', height: '64px' }} />
             <h1 style={{ fontSize: '3rem', fontWeight: 800, background: 'linear-gradient(to right, var(--text-primary), var(--primary-color))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
               Financiero
             </h1>
