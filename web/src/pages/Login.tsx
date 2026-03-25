@@ -12,7 +12,7 @@ export default function Login() {
   }
 
   return (
-    <div className="flex w-full" style={{ minHeight: '100vh', backgroundColor: 'var(--bg-color)', transition: 'var(--transition)' }}>
+    <div className="flex w-full" style={{ minHeight: '100vh', backgroundColor: 'var(--bg-color)', transition: 'var(--transition)', flexWrap: 'wrap' }}>
       {/* Top Navigation for Landing */}
       <div style={{ position: 'absolute', top: 0, left: 0, right: 0, padding: '1.5rem 3rem', display: 'flex', justifyContent: 'flex-end', zIndex: 10 }}>
         <button 
@@ -34,9 +34,9 @@ export default function Login() {
 
       {/* Left side info panel */}
       <div className="flex" style={{ 
-        flex: 1, 
+        flex: '1 1 400px', 
         flexDirection: 'column', 
-        padding: '5rem 4rem', 
+        padding: 'clamp(2rem, 5vw, 5rem) clamp(1.5rem, 5vw, 4rem)', 
         justifyContent: 'center',
         background: theme === 'dark' 
           ? 'linear-gradient(135deg, rgba(15,23,42,1) 0%, rgba(30,41,59,1) 100%)' 
@@ -56,14 +56,14 @@ export default function Login() {
         }} />
 
         <div style={{ position: 'relative', zIndex: 1 }}>
-          <div style={{ marginBottom: '2.5rem', display: 'flex', alignItems: 'center', gap: '1.5rem' }}>
-            <img src="/logo.svg" alt="Financiero" style={{ width: '64px', height: '64px' }} />
-            <h1 style={{ fontSize: '3rem', fontWeight: 800, background: 'linear-gradient(to right, var(--text-primary), var(--primary-color))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+          <div style={{ marginBottom: '2.5rem', display: 'flex', alignItems: 'center', gap: '1.5rem', flexWrap: 'wrap' }}>
+            <img src="/logo.svg" alt="Financiero" style={{ width: 'clamp(48px, 6vw, 64px)', height: 'clamp(48px, 6vw, 64px)' }} />
+            <h1 style={{ fontSize: 'clamp(2.5rem, 6vw, 3rem)', fontWeight: 800, background: 'linear-gradient(to right, var(--text-primary), var(--primary-color))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
               Financiero
             </h1>
           </div>
           
-          <h2 style={{ fontSize: '2.5rem', marginBottom: '1.5rem', fontWeight: 700, lineHeight: 1.2, color: 'var(--text-primary)' }}>
+          <h2 style={{ fontSize: 'clamp(1.75rem, 5vw, 2.5rem)', marginBottom: '1.5rem', fontWeight: 700, lineHeight: 1.2, color: 'var(--text-primary)' }}>
             Elevate Your <br/><span style={{ color: 'var(--primary-color)' }}>Financial Intelligence</span>
           </h2>
           <p style={{ fontSize: '1.125rem', color: 'var(--text-secondary)', marginBottom: '3.5rem', maxWidth: '450px', lineHeight: 1.6 }}>
@@ -94,9 +94,9 @@ export default function Login() {
       </div>
 
       {/* Right side login panel */}
-      <div className="flex items-center" style={{ flex: 1, justifyContent: 'center', padding: '2rem', backgroundColor: 'var(--bg-color)' }}>
+      <div className="flex items-center" style={{ flex: '1 1 400px', justifyContent: 'center', padding: 'clamp(1.5rem, 5vw, 2rem)', backgroundColor: 'var(--bg-color)' }}>
         <div className="card text-center" style={{ 
-          width: '100%', maxWidth: '440px', padding: '3rem 2rem',
+          width: '100%', maxWidth: '440px', padding: 'clamp(2rem, 5vw, 3rem) clamp(1.5rem, 5vw, 2rem)',
           boxShadow: theme === 'dark' ? '0 25px 50px -12px rgba(0,0,0,0.8)' : '0 25px 50px -12px rgba(0,0,0,0.1)',
           border: '1px solid var(--border-color)',
           backdropFilter: 'blur(10px)',
