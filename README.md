@@ -12,6 +12,7 @@ Access the live application here: [https://financiero-abca3.web.app](https://fin
 ### 🔐 Secure Identity & Real-Time Sync
 - **Google Authentication:** Seamlessly log in using your Google Account securely managed by Firebase Auth.
 - **Real-Time Database Sync:** All transactions are instantly saved and synchronized across your devices via Firestore NoSQL.
+- **End-to-End Encryption (E2EE):** Sensitive transaction metrics (Amounts, Notes, Categories) are secured via native WebCrypto `AES-GCM` encryption tunnels inside the browser *before* hitting Firebase, establishing a true Zero-Knowledge infrastructure.
 
 ### 💸 Core Finance Tracking
 - **Multi-Currency Engine:** Record transactions natively in USD, EUR, GBP, LKR, INR, JPY, AUD, or CAD.
