@@ -159,3 +159,53 @@ button {
 .mb-4 { margin-bottom: 1rem; }
 .w-full { width: 100%; }
 .text-center { text-align: center; }
+
+/* Sidebar Nav Link Effects */
+.nav-link {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  color: var(--text-secondary);
+}
+.nav-link::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; bottom: 0;
+  width: 0%;
+  background: var(--primary-color);
+  opacity: 0.1;
+  transition: width 0.3s ease;
+  z-index: -1;
+}
+.nav-link:hover {
+  color: var(--primary-color) !important;
+  transform: translateX(6px);
+}
+.nav-link:hover::before {
+  width: 100%;
+}
+.nav-link.active {
+  background-color: rgba(59, 130, 246, 0.1) !important;
+  border-right: 3px solid var(--primary-color) !important;
+  color: var(--primary-color) !important;
+}
+.nav-link.active svg {
+  filter: drop-shadow(0 0 8px rgba(59, 130, 246, 0.5));
+}
+
+.sidebar-logo {
+  transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+.sidebar-logo:hover {
+  transform: scale(1.15) rotate(-6deg);
+  filter: drop-shadow(0 0 10px var(--primary-color));
+}
+
+.sidebar-toggle {
+  transition: all 0.3s ease !important;
+}
+.sidebar-toggle:hover {
+  box-shadow: 0 0 15px rgba(59, 130, 246, 0.4) !important;
+  color: var(--primary-color) !important;
+  border-color: var(--primary-color) !important;
+}

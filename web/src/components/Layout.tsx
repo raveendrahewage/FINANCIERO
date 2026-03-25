@@ -74,7 +74,7 @@ export default function Layout() {
       }}>
         <div style={{ padding: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
           <div className="flex items-center" style={{ gap: '1rem' }}>
-            <img src="/logo.svg" alt="Financiero" style={{ width: '32px', height: '32px', minWidth: '32px' }} />
+            <img src="/logo.svg" alt="Financiero" className="sidebar-logo" style={{ width: '32px', height: '32px', minWidth: '32px', cursor: 'pointer' }} />
             {isSidebarOpen && <span style={{ fontSize: '1.25rem', fontWeight: 700 }}>Financiero</span>}
           </div>
           {isMobile && (
@@ -91,6 +91,7 @@ export default function Layout() {
               <Link 
                 key={item.path} 
                 to={item.path}
+                className={`flex items-center nav-link ${isActive ? 'active' : ''}`}
                 onClick={() => isMobile && setIsSidebarOpen(false)}
                 title={!isSidebarOpen && !isMobile ? item.label : undefined}
                 style={{
@@ -98,10 +99,7 @@ export default function Layout() {
                   padding: isSidebarOpen ? '0.75rem 1rem' : '0.75rem',
                   justifyContent: isSidebarOpen ? 'flex-start' : 'center',
                   borderRadius: 'var(--radius-md)', 
-                  backgroundColor: isActive ? 'var(--primary-color)' : 'transparent',
-                  color: isActive ? 'white' : 'var(--text-secondary)',
-                  fontWeight: isActive ? 600 : 500,
-                  transition: 'var(--transition)'
+                  fontWeight: isActive ? 600 : 500
                 }}
               >
                 <item.icon size={20} style={{ minWidth: '20px' }} />
@@ -139,16 +137,16 @@ export default function Layout() {
           </button>
         </div>
 
-        {/* Desktop Sidebar Toggle Button (overlapping right border) */}
         {!isMobile && (
           <button 
             onClick={toggleSidebar} 
+            className="sidebar-toggle"
             style={{ 
               position: 'absolute', top: '1.5rem', right: '-14px', 
               width: '28px', height: '28px', borderRadius: '50%', 
               backgroundColor: 'var(--bg-panel)', color: 'var(--text-secondary)', 
               border: '1px solid var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', zIndex: 100, transition: 'var(--transition)',
+              cursor: 'pointer', zIndex: 100,
               boxShadow: 'var(--card-shadow)', padding: 0
             }}
           >
