@@ -6,6 +6,8 @@ export interface Transaction {
   date: string;
   note: string;
   currency: string;
+  attachmentUrl?: string;
+  attachmentName?: string;
   createdAt: any;
 }
 

@@ -1,117 +1,91 @@
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useTransactions } from '../hooks/useTransactions';
-import { Sparkles, AlertTriangle, TrendingUp, PiggyBank, Send, Bot, User } from 'lucide-react';
-import { format, parseISO, subMonths, isSameMonth, subDays, isAfter } from 'date-fns';
+import { Sparkles, AlertTriangle, TrendingUp, PiggyBank, Send, Bot, User, Loader2 } from 'lucide-react';
+import { format, parseISO } from 'date-fns';
+import { getFinancialInsights, chatWithAI } from '../utils/ai';
+import type { FinancialInsights, ChatMessage } from '../utils/ai';
+import { useSettings } from '../contexts/SettingsContext';
 
 export default function Insights() {
   const { transactions, loading } = useTransactions();
+  const { baseCurrency } = useSettings();
   
   // Chat state
   const [query, setQuery] = useState('');
-  const [chat, setChat] = useState<{role: 'user'|'ai', text: string}[]>([
-    { role: 'ai', text: 'Hello! I am your visual financial assistant. Ask me questions like "Where did I spend the most last month?" or "How much did I make this month?"' }
+  const [chat, setChat] = useState<ChatMessage[]>([
+    { role: 'ai', text: 'Hi! I’m your personal financial guide. Ask me anything about your spending, and I’ll help you make sense of it!' }
   ]);
+  const [isAsking, setIsAsking] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
+
+  // AI Insights state
+  const [aiInsights, setAiInsights] = useState<FinancialInsights | null>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isFallback, setIsFallback] = useState(false);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [chat]);
 
-  // --- HEURISTICS ENGINE ---
-  const { diningAlert, unusualExpenses, savingsPlan } = useMemo(() => {
-    const expenses = transactions.filter(t => t.type === 'expense');
-    const incomes = transactions.filter(t => t.type === 'income');
-    const now = new Date();
-    const lastMonthDate = subMonths(now, 1);
-
-    // 1. Dining comparison
-    const diningThisMonth = expenses
-      .filter(t => t.category.toLowerCase().includes('food') || t.category.toLowerCase().includes('dining'))
-      .filter(t => isSameMonth(parseISO(t.date), now))
-      .reduce((sum, t) => sum + Number(t.amount), 0);
-      
-    const diningLastMonth = expenses
-      .filter(t => t.category.toLowerCase().includes('food') || t.category.toLowerCase().includes('dining'))
-      .filter(t => isSameMonth(parseISO(t.date), lastMonthDate))
-      .reduce((sum, t) => sum + Number(t.amount), 0);
-      
-    let diningAlert = null;
-    if (diningThisMonth > diningLastMonth && diningLastMonth > 0) {
-      const pct = Math.round(((diningThisMonth - diningLastMonth) / diningLastMonth) * 100);
-      diningAlert = `You are spending ${pct}% more on dining this month ($${diningThisMonth.toFixed(2)}) compared to last month. Consider cooking at home to stay on budget!`;
-    } else if (diningThisMonth > 300) {
-      diningAlert = `Your dining expenses are at $${diningThisMonth.toFixed(2)} this month. Cutting this by 20% could save you $${(diningThisMonth * 0.2).toFixed(2)}!`;
-    }
-
-    // 2. Unusual Expenses (Large single expenses in last 30 days)
-    const thirtyDaysAgo = subDays(now, 30);
-    const recentExpenses = expenses.filter(t => isAfter(parseISO(t.date), thirtyDaysAgo));
-    const avgRecent = recentExpenses.reduce((s, t) => s + Number(t.amount), 0) / (recentExpenses.length || 1);
-    
-    const unusual = recentExpenses
-      .filter(t => Number(t.amount) > avgRecent * 3 && Number(t.amount) > 100)
-      .filter(t => !t.category.toLowerCase().includes('housing') && !t.category.toLowerCase().includes('rent'));
-      
-    // 3. Savings Plan (50/30/20 rule based on recent 30-day income)
-    const recentIncome = incomes
-      .filter(t => isAfter(parseISO(t.date), thirtyDaysAgo))
-      .reduce((s, t) => s + Number(t.amount), 0);
-      
-    let savingsPlan = null;
-    if (recentIncome > 0) {
-      savingsPlan = {
-        needs: recentIncome * 0.5,
-        wants: recentIncome * 0.3,
-        savings: recentIncome * 0.2,
-        total: recentIncome
+  // Fetch AI Insights when transactions change
+  useEffect(() => {
+    if (transactions.length > 0 && !loading) {
+      const fetchInsights = async () => {
+        setIsAnalyzing(true);
+        const insights = await getFinancialInsights(transactions, baseCurrency);
+        if (insights) {
+          setAiInsights(insights);
+          setIsFallback(false);
+        } else {
+          // Internal Simple Fallback
+          const totalExpense = transactions.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0);
+          const topCategory = transactions.filter(t => t.type === 'expense').length > 0 
+            ? transactions.filter(t => t.type === 'expense').reduce((a, b) => (a.amount > b.amount ? a : b)).category
+            : "General";
+            
+          setAiInsights({
+            spendingPattern: `So far, you’ve spent ${totalExpense.toLocaleString()} ${baseCurrency}. Your biggest spending category is ${topCategory}.`,
+            unusualExpenses: [],
+            savingsPlan: null
+          });
+          setIsFallback(true);
+        }
+        setIsAnalyzing(false);
       };
+      fetchInsights();
     }
+  }, [transactions, loading]);
 
-    return { diningAlert, unusualExpenses: unusual, savingsPlan };
-  }, [transactions]);
-
-  // --- NLP CHAT PARSER ---
-  const handleAsk = (e: React.FormEvent) => {
+  const handleAsk = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!query.trim()) return;
+    if (!query.trim() || isAsking) return;
 
-    const q = query.toLowerCase();
-    const newChat = [...chat, { role: 'user' as const, text: query }];
+    const userQuery = query.trim();
+    const newChat: ChatMessage[] = [...chat, { role: 'user', text: userQuery }];
     setQuery('');
     setChat(newChat);
+    setIsAsking(true);
 
-    setTimeout(() => {
-      let aiResponse = "I'm a lightweight local assistant right now! Try asking 'Where did I spend the most last month?' or 'What is my total income?'";
-      
-      const now = new Date();
-      const lastMonth = subMonths(now, 1);
-      
-      if (q.includes('most') && q.includes('last month')) {
-        const lastMonthExpenses = transactions
-          .filter(t => t.type === 'expense' && isSameMonth(parseISO(t.date), lastMonth))
-          .sort((a, b) => Number(b.amount) - Number(a.amount));
-        
-        if (lastMonthExpenses.length > 0) {
-          const top = lastMonthExpenses[0];
-          aiResponse = `Your largest expense last month was **$${Number(top.amount).toFixed(2)}** for **${top.category}** on ${format(parseISO(top.date), 'MMM do')}. ${top.note ? `(${top.note})` : ''}`;
+    const aiResponse = await chatWithAI(userQuery, transactions, chat, (text) => {
+      setChat(prev => {
+        const last = prev[prev.length - 1];
+        if (last && last.role === 'ai' && prev.length > newChat.length) {
+          return [...prev.slice(0, -1), { role: 'ai', text }];
         } else {
-          aiResponse = "I couldn't find any expenses for last month!";
+          return [...prev, { role: 'ai', text }];
         }
-      } 
-      else if ((q.includes('total') || q.includes('how much')) && q.includes('income')) {
-        const total = transactions.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0);
-        aiResponse = `Your total recorded income across all time is $${total.toLocaleString(undefined, {minimumFractionDigits: 2})}.`;
-      }
-      else if (q.includes('save') || q.includes('budget')) {
-        if (savingsPlan) {
-          aiResponse = `Based on your recent monthly income of $${savingsPlan.total.toFixed(2)}, I recommend the 50/30/20 rule: \n- **$${savingsPlan.needs.toFixed(2)}** for Needs (50%)\n- **$${savingsPlan.wants.toFixed(2)}** for Wants (30%)\n- **$${savingsPlan.savings.toFixed(2)}** to Savings/Investing (20%).`;
-        } else {
-          aiResponse = "I need more income data to generate a budget plan. Try adding your salary!";
-        }
-      }
-
-      setChat(prev => [...prev, { role: 'ai', text: aiResponse }]);
-    }, 600);
+      });
+    }, baseCurrency);
+    
+    if (!aiResponse) {
+      const topExpense = transactions.filter(t => t.type === 'expense').sort((a,b) => Number(b.amount) - Number(a.amount))[0];
+      const localResponse = topExpense 
+        ? `I'm in offline mode right now, but I can see your largest expense was ${Number(topExpense.amount).toLocaleString()} ${topExpense.currency || baseCurrency} for ${topExpense.category}.`
+        : "I am in local mode and couldn't find enough data to give you a specific answer. [Local Fallback]";
+      setChat(prev => [...prev, { role: 'ai', text: localResponse }]);
+      setIsFallback(true);
+    }
+    setIsAsking(false);
   };
 
   if (loading) return <div className="text-secondary text-center">Crunching numbers...</div>;
@@ -123,8 +97,14 @@ export default function Insights() {
           <Sparkles size={24} />
         </div>
         <div>
-          <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.25rem' }}>AI Insights</h1>
-          <p className="text-secondary">Smart analysis based on your financial footprint.</p>
+          <h1 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '0.25rem' }}>
+            {isFallback ? 'Quick Overview' : 'AI Financial Guide'}
+          </h1>
+          <p className="text-secondary">
+            {isFallback 
+              ? 'Showing a quick overview of your data while we reconnect.' 
+              : 'Smart tips based on your recent spending habits.'}
+          </p>
         </div>
       </div>
 
@@ -137,7 +117,11 @@ export default function Insights() {
             <h3 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Spending Pattern</h3>
           </div>
           <p style={{ color: 'var(--text-secondary)', lineHeight: 1.6 }}>
-            {diningAlert || "Your dining and food expenses are looking stable this month. Great job sticking to the plan!"}
+            {isAnalyzing ? (
+              <span className="flex items-center gap-2"><Loader2 size={16} className="animate-spin" /> Analyzing habits...</span>
+            ) : (
+              aiInsights?.spendingPattern || "Your dining and food expenses are looking stable this month. Great job sticking to the plan!"
+            )}
           </p>
         </div>
 
@@ -145,16 +129,20 @@ export default function Insights() {
         <div className="card" style={{ borderTop: '4px solid var(--danger-color)' }}>
           <div className="flex items-center gap-2 mb-4">
             <AlertTriangle className="text-danger" size={24} />
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Anomaly Detection</h3>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Unusual Spikes</h3>
           </div>
-          {unusualExpenses.length > 0 ? (
+          {isAnalyzing ? (
+            <p className="flex items-center gap-2" style={{ color: 'var(--text-secondary)' }}>
+              <Loader2 size={16} className="animate-spin" /> Scanning for anomalies...
+            </p>
+          ) : aiInsights?.unusualExpenses && aiInsights.unusualExpenses.length > 0 ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <p style={{ color: 'var(--text-secondary)' }}>Detected {unusualExpenses.length} unusually high expense(s) recently:</p>
-              {unusualExpenses.slice(0, 3).map(t => (
-                <div key={t.id} style={{ padding: '0.75rem', backgroundColor: 'var(--bg-color)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+              <p style={{ color: 'var(--text-secondary)' }}>I noticed {aiInsights.unusualExpenses.length} unusually high expense(s) recently:</p>
+              {aiInsights.unusualExpenses.slice(0, 3).map((t, idx) => (
+                <div key={idx} style={{ padding: '0.75rem', backgroundColor: 'var(--bg-color)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
                   <div className="flex justify-between font-medium">
                     <span>{t.category}</span>
-                    <span className="text-danger">-${Number(t.amount).toFixed(2)}</span>
+                    <span className="text-danger">-{Number(t.amount).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
                   </div>
                   <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '0.25rem' }}>
                     {format(parseISO(t.date), 'MMM do')} {t.note && `- ${t.note}`}
@@ -175,18 +163,22 @@ export default function Insights() {
             <PiggyBank className="text-success" size={24} />
             <h3 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Smart Budgeting</h3>
           </div>
-          {savingsPlan ? (
+          {isAnalyzing ? (
+            <p className="flex items-center gap-2" style={{ color: 'var(--text-secondary)' }}>
+              <Loader2 size={16} className="animate-spin" /> Calculating budget split...
+            </p>
+          ) : aiInsights?.savingsPlan ? (
             <div>
-              <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>Based on recent income (${savingsPlan.total.toFixed(0)}), aim for this 50/30/20 split:</p>
+              <p style={{ color: 'var(--text-secondary)', marginBottom: '1rem' }}>Based on recent income ({aiInsights.savingsPlan.total.toLocaleString()} {baseCurrency}), aim for this 50/30/20 split:</p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 <div className="flex justify-between" style={{ padding: '0.5rem', backgroundColor: 'var(--bg-color)', borderRadius: 'var(--radius-md)' }}>
-                  <span>Needs (50%)</span> <span className="font-medium text-primary">${savingsPlan.needs.toFixed(0)}</span>
+                  <span>Needs (50%)</span> <span className="font-medium text-primary">{aiInsights.savingsPlan.needs.toLocaleString()} {baseCurrency}</span>
                 </div>
                 <div className="flex justify-between" style={{ padding: '0.5rem', backgroundColor: 'var(--bg-color)', borderRadius: 'var(--radius-md)' }}>
-                  <span>Wants (30%)</span> <span className="font-medium text-warning">${savingsPlan.wants.toFixed(0)}</span>
+                  <span>Wants (30%)</span> <span className="font-medium text-warning">{aiInsights.savingsPlan.wants.toLocaleString()} {baseCurrency}</span>
                 </div>
                 <div className="flex justify-between" style={{ padding: '0.5rem', backgroundColor: 'var(--bg-color)', borderRadius: 'var(--radius-md)' }}>
-                  <span>Savings (20%)</span> <span className="font-medium text-success">${savingsPlan.savings.toFixed(0)}</span>
+                  <span>Savings (20%)</span> <span className="font-medium text-success">{aiInsights.savingsPlan.savings.toLocaleString()} {baseCurrency}</span>
                 </div>
               </div>
             </div>
@@ -199,7 +191,7 @@ export default function Insights() {
       </div>
 
       {/* NLP Chat Interface */}
-      <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '1rem' }}>Ask your Financial AI</h2>
+      <h2 style={{ fontSize: '1.5rem', fontWeight: 700, marginBottom: '1rem' }}>Ask your Financial Guide</h2>
       <div className="card" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column', height: '400px' }}>
         
         <div style={{ flex: 1, padding: '1.5rem', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -228,6 +220,23 @@ export default function Insights() {
               </div>
             </div>
           ))}
+          {isAsking && (
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+              <div style={{ 
+                minWidth: '36px', height: '36px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                backgroundColor: 'var(--primary-hover)', color: 'white'
+              }}>
+                <Bot size={20} />
+              </div>
+              <div style={{ 
+                padding: '1rem', borderRadius: 'var(--radius-lg)', backgroundColor: 'var(--bg-color)', border: '1px solid var(--border-color)',
+                borderTopLeftRadius: 0, display: 'flex', alignItems: 'center', gap: '0.5rem'
+              }}>
+                <Loader2 size={16} className="animate-spin" />
+                <span>Thinking...</span>
+              </div>
+            </div>
+          )}
           <div ref={chatEndRef} />
         </div>
 
@@ -239,9 +248,10 @@ export default function Insights() {
             placeholder="Ask about your spending..." 
             value={query}
             onChange={e => setQuery(e.target.value)}
+            disabled={isAsking}
           />
-          <button type="submit" className="btn btn-primary" disabled={!query.trim()} style={{ padding: '0 1.5rem' }}>
-            <Send size={18} />
+          <button type="submit" className="btn btn-primary" disabled={!query.trim() || isAsking} style={{ padding: '0 1.5rem' }}>
+            {isAsking ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
           </button>
         </form>
       </div>

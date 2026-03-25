@@ -1,11 +1,11 @@
 import { useAuth } from '../contexts/AuthContext';
-import { useTheme } from '../contexts/ThemeContext';
+import { useSettings } from '../contexts/SettingsContext';
 import { Navigate } from 'react-router-dom';
 import { Wallet, Activity, ArrowRight, ShieldCheck, PieChart, Moon, Sun } from 'lucide-react';
 
 export default function Login() {
   const { user, signInWithGoogle } = useAuth();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, toggleTheme } = useSettings();
 
   if (user) {
     return <Navigate to="/dashboard" replace />;
@@ -67,7 +67,7 @@ export default function Login() {
             Elevate Your <br/><span style={{ color: 'var(--primary-color)' }}>Financial Intelligence</span>
           </h2>
           <p style={{ fontSize: '1.125rem', color: 'var(--text-secondary)', marginBottom: '3.5rem', maxWidth: '450px', lineHeight: 1.6 }}>
-            Understand your spending habits, track all expenses in real-time, and make smarter decisions with our enterprise-grade personal dashboard.
+            See exactly where your money goes, track every expense instantly, and grow your savings with your own personal financial command center.
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.75rem' }}>
@@ -75,19 +75,19 @@ export default function Login() {
               <div style={{ padding: '0.75rem', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--success-bg)', color: 'var(--success-text)' }}>
                 <Activity size={24} />
               </div>
-              <span style={{ fontSize: '1.125rem', fontWeight: 500, color: 'var(--text-primary)' }}>Precision tracking & analytics</span>
+              <span style={{ fontSize: '1.125rem', fontWeight: 500, color: 'var(--text-primary)' }}>Crystal-clear spending charts</span>
             </div>
             <div className="flex items-center gap-4 group">
               <div style={{ padding: '0.75rem', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--warning-bg)', color: 'var(--warning-text)' }}>
                 <PieChart size={24} />
               </div>
-              <span style={{ fontSize: '1.125rem', fontWeight: 500, color: 'var(--text-primary)' }}>Visual insights & cashflow trends</span>
+              <span style={{ fontSize: '1.125rem', fontWeight: 500, color: 'var(--text-primary)' }}>Smart trends & insights</span>
             </div>
             <div className="flex items-center gap-4 group">
               <div style={{ padding: '0.75rem', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--danger-bg)', color: 'var(--danger-text)' }}>
                 <ShieldCheck size={24} />
               </div>
-              <span style={{ fontSize: '1.125rem', fontWeight: 500, color: 'var(--text-primary)' }}>Bank-grade secure infrastructure</span>
+              <span style={{ fontSize: '1.125rem', fontWeight: 500, color: 'var(--text-primary)' }}>100% Private and Secure</span>
             </div>
           </div>
         </div>
@@ -106,7 +106,7 @@ export default function Login() {
             <Wallet size={48} color="var(--primary-color)" strokeWidth={1.5} />
           </div>
           <h3 style={{ fontSize: '1.75rem', fontWeight: 700, marginBottom: '0.5rem', color: 'var(--text-primary)' }}>Welcome to Financiero</h3>
-          <p style={{ color: 'var(--text-secondary)', marginBottom: '2.5rem', fontSize: '1rem' }}>Securely authenticate to access your portfolio</p>
+          <p style={{ color: 'var(--text-secondary)', marginBottom: '2.5rem', fontSize: '1rem' }}>Sign in to access your personal dashboard</p>
           
           <button 
             onClick={signInWithGoogle}
@@ -145,7 +145,7 @@ export default function Login() {
           </button>
           
           <p style={{ marginTop: '2rem', fontSize: '0.875rem', color: 'var(--text-secondary)' }}>
-            By continuing, you establish a secure session powered by Google Auth via Firebase Architecture.
+            Your privacy is our priority. Log in safely using your trusted Google account for instant access to your spending charts, AI insights, and personalized budget alerts.
           </p>
         </div>
       </div>

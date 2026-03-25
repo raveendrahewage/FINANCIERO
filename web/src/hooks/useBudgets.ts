@@ -7,6 +7,7 @@ import type { Budget } from '../types';
 export function useBudgets() {
   const { user } = useAuth();
   const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) {
@@ -24,8 +25,10 @@ export function useBudgets() {
         data.push({ id: doc.id, ...doc.data() } as Budget);
       });
       setBudgets(data);
+      setLoading(false);
     }, (error) => {
       console.error("Error fetching budgets", error);
+      setLoading(false);
     });
 
     return () => unsubscribe();
@@ -50,5 +53,5 @@ export function useBudgets() {
     return deleteDoc(doc(db, 'users', user.uid, 'budgets', id));
   };
 
-  return { budgets, addBudget, updateBudget, deleteBudget };
+  return { budgets, loading, addBudget, updateBudget, deleteBudget };
 }

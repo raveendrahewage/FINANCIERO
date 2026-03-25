@@ -9,26 +9,31 @@ Access the live application here: [https://financiero-abca3.web.app](https://fin
 
 ## ✨ Core Features
 
-### 🔐 Secure Identity & Real-Time Sync
-- **Google Authentication:** Seamlessly log in using your Google Account securely managed by Firebase Auth.
-- **Real-Time Database Sync:** All transactions are instantly saved and synchronized across your devices via Firestore NoSQL.
-- **End-to-End Encryption (E2EE):** Sensitive transaction metrics (Amounts, Notes, Categories) are secured via native WebCrypto `AES-GCM` encryption tunnels inside the browser *before* hitting Firebase, establishing a true Zero-Knowledge infrastructure.
+### 🔐 Private & Secure
+- **Easy Sign-In:** Jump right in using your Google Account—fast, easy, and secure.
+- **Your Data Stays Yours:** Thanks to "Zero-Knowledge" security, your personal financial details are encrypted on your device *before* they are ever saved. We can't see your transactions—only you can.
+- **Bank-Grade Privacy:** We use advanced encryption to keep your money matters confidential and protected.
 
-### 💸 Core Finance Tracking
-- **Multi-Currency Engine:** Record transactions natively in USD, EUR, GBP, LKR, INR, JPY, AUD, or CAD.
-- **Custom Categories:** Dynamically add your own specialized categories onto the fly if the default buckets don't fit your lifestyle.
-- **Combined Equity Matrix:** The unified Dashboard automatically cross-calculates multi-currency spends back to a unified USD projection base for seamless charting.
+### 💸 Effortless Money Tracking
+- **Multi-Currency Support:** Traveling or living abroad? Add transactions in any currency. We handle the math with **live exchange rates** to keep everything accurate.
+- **Personalized Categories:** Organize your spending your way. Create custom labels for your groceries, hobbies, or business.
+- **Combined View:** See your total "Net Worth" instantly. We automatically convert all your different currencies into a single, easy-to-read total.
 
-### 🔔 Budget Limits & Real-Time Alerts
-- **Global Limits:** Set strict amount constraints by timeframe (Monthly vs All-Time totals), specific Currencies, or explicit Expense Categories.
-- **Reactive Alert Overlays:** The moment a logged transaction pushes your history over your formally defined limits, a fixed, brightly-colored toast notification dynamically alerts you instantly via the top-right overlay.
+### 🔔 Staying On Track
+- **Spending Limits:** Set monthly goals or totals for specific categories to keep your budget healthy.
+- **Smart Filtering:** Find any transaction in seconds. Filter by date, amount, or category with one tap.
+- **Instant Alerts:** Get a friendly nudge when you're getting close to your limits, helping you avoid overspending.
 
-### 🤖 The "AI Insights" Suite (Local NLP)
-- **Zero-API-Key Tracking:** Employs entirely local, deeply isolated algorithmic logic to parse spending datasets securely without bouncing raw data to OpenAi/Anthropic.
-- **Anomaly Detection:** Scans your trailing 30-day cash flow to identify massive irregular expense spikes.
-- **Predictive Spending:** Evaluates Month-over-Month specific category velocities (e.g. intelligently tracking your "Dining" changes).
-- **Automated 50/30/20 Budgeting:** Computes your recent verified income to output a mathematically scaled ideal spending protocol.
-- **Natural Language Chat (Mock-NLP):** Text queries like *"Where did I spend the most last month?"* or *"What is my total income?"* securely trigger dataset scrapes, perfectly mimicking LLM interaction bounds.
+### 🤖 AI Financial Assistant
+- **Friendly Advice:** Our built-in AI assistant analyzes your habits to give you personalized tips on how to save more.
+- **Instant Chat:** Ask questions like "How much did I spend on coffee last week?" and get answers instantly.
+- **Budgeting Made Easy:** The AI can automatically suggest a healthy budget split based on your actual income history.
+
+### ⚙️ User Settings & Personalization
+- **Customizable Dashboard Layout:** A native **Drag and Drop** system allows you to reorder analytics widgets. Your custom layout is persisted in `localStorage`.
+- **Global Base Currency:** Set your preferred default (e.g., LKR). All forms default to this selection for faster entry.
+- **Dynamic Theming:** Seamlessly toggle between "Deep Dark" and "Vivid Light" modes.
+- **Data Portability:** Export your entire transaction history to CSV format.
 
 ---
 

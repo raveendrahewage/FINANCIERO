@@ -1,14 +1,18 @@
 import { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { useTheme } from '../contexts/ThemeContext';
-import { LayoutDashboard, Receipt, LogOut, Moon, Sun, Menu, X, ChevronLeft, ChevronRight, Sparkles, BellRing } from 'lucide-react';
+import { useSettings } from '../contexts/SettingsContext';
+import { LayoutDashboard, Receipt, LogOut, Moon, Sun, Menu, X, ChevronLeft, ChevronRight, Sparkles, BellRing, Settings } from 'lucide-react';
 import GlobalAlerts from './GlobalAlerts';
+import { useAlerts } from '../hooks/useAlerts';
 
 export default function Layout() {
   const { user, signOut } = useAuth();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, toggleTheme } = useSettings();
   const location = useLocation();
+  const { activeAlerts } = useAlerts();
+  
+  const hasActiveAlerts = activeAlerts.length > 0;
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 768);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -31,6 +35,7 @@ export default function Layout() {
     { path: '/transactions', icon: Receipt, label: 'Transactions' },
     { path: '/insights', icon: Sparkles, label: 'AI Insights' },
     { path: '/budgets', icon: BellRing, label: 'Alerts' },
+    { path: '/settings', icon: Settings, label: 'Settings' },
   ];
 
   return (
@@ -104,6 +109,18 @@ export default function Layout() {
               >
                 <item.icon size={20} style={{ minWidth: '20px' }} />
                 {isSidebarOpen && item.label}
+                {item.path === '/budgets' && hasActiveAlerts && (
+                  <div style={{ 
+                    width: '8px', height: '8px', 
+                    backgroundColor: 'var(--danger-color)', 
+                    borderRadius: '50%', 
+                    marginLeft: isSidebarOpen ? 'auto' : '0',
+                    position: isSidebarOpen ? 'static' : 'absolute',
+                    top: isSidebarOpen ? 'auto' : '8px',
+                    right: isSidebarOpen ? 'auto' : '8px',
+                    boxShadow: '0 0 0 2px var(--bg-panel)'
+                  }} />
+                )}
               </Link>
             )
           })}

@@ -108,6 +108,13 @@ button {
   background-color: var(--bg-color);
 }
 
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(0.3);
+  transform: none !important;
+}
+
 .card {
   background-color: var(--bg-panel);
   border-radius: var(--radius-lg);
